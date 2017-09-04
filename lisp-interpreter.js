@@ -1,33 +1,39 @@
-function tokenize(input){ //convert string to tokens
-    input = input.replace(/\(/g, ' ( ')
-    input = input.replace(/\)/g, ' ) ')
-    input = input.trim()
-    return input.split(/\s+/g)
+const fs = require('fs')
+const path = require('path')
+const file = fs.readFileSync(path.join(__dirname,'./file')).toString()
+
+const spaceParser = function(input){
+    return /^(\s)+/.exec(input) ? input.replace(/^(\s)+/, '') : input
 }
 
-function parse(input){
-    return readFromTokens(tokenize(input))
+const numberParser = function(input){
+    let string = /^\d+/.exec(input)
+    return string ? [parseFloat(string[0]), input.slice(string[0].length)] : null
 }
 
-function readFromTokens(tokens){
-    let token = tokens.shift()
-    if(token === '('){
-        let expression = []
-        while(tokens[0] !== ')'){
-            expression.push(readFromTokens(tokens))
-        }
-        tokens.shift() //remove )
-        return expression
+const variableParser = function(input){
+    let string = /^[a-z]+/.exec(input)
+    return string ? [string[0], input.slice(string[0].length)] : null
+}
+
+const expressionParser = function(input){
+    if(input[0] !== '(') return null
+    input = input.slice(1)
+    let result = []
+    while(input[0] !== ')'){
+
     }
-    if(token === ')') return null
-    return atom(token)
+    return [result, input.slice(1)]
 }
 
-function atom(token){
-    let float = parseFloat(token)
-    if(!isNaN(float)) return float
-    return token
+const parser = function(input){
+    let result = (expressionParser(input) || numberParser(input) || variableParser(input))
+        return result
+    return null
 }
+console.log(parser(file))
 
-let program = "(begin (define r 10) (* pi (* r r)))"
-console.log(parse(program))
+// IDEA: parse empty ()
+// IDEA: parse num value
+// IDEA: var name parse
+// IDEA: parse basic math
