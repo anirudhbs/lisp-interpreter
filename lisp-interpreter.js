@@ -1,6 +1,5 @@
 const fs = require('fs')
-const path = require('path')
-const file = fs.readFileSync(path.join(__dirname,'./file')).toString()
+const file = process.argv[2]
 
 let standardEnv = {
     '+' : input => input.reduce((sum, num) => sum+num, 0),
@@ -89,4 +88,4 @@ const lambdaParser = function(input){
     return true
 }
 
-console.log(valueParser(file))
+fs.readFile(file, 'utf-8', (error, input) => console.log(valueParser(input)))
