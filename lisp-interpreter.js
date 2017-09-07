@@ -10,8 +10,8 @@ let standardEnv = {
 
     '=' : input => input[0] === input[1],
     '<' : input => input[0] < input[1],
-    '>' : input => input[0] > input[1],
     '<=' : input => input[0] <= input[1],
+    '>' : input => input[0] > input[1],
     '>=' : input => input[0] >= input[1],
 
     'if' : input => input[0] ? input[1] : input[2],
@@ -19,9 +19,18 @@ let standardEnv = {
     'begin' : input => input[input.length - 1],
 
     'abs' : input => Math.abs(input[0]),
-    'max' : input => input.reduce((array, value) => Math.max(array, value)),
+    'max' : input => input.reduce((array, value) => Math.max(array, value)), //...array
     'min' : input => input.reduce((array, value) => Math.min(array, value)),
+
+    'list' : input => input,
+    'car' : input => input[0],
+    'cdr' : input => input.slice(1),
 }
+
+let functions = ['if', 'define', 'begin', 'abs', 'max', 'min', 'list', 'car', 'cdr']
+let functionRE = new RegExp(functions.join('|'))
+
+let secondaryEnv = {}
 
 const spaceParser = function(input){
     return /^(\s)+/.exec(input) ? input.replace(/^(\s)+/, '') : input
@@ -37,50 +46,47 @@ const identifierParser = function(input){
     return string ? [string[0], input.slice(string[0].length)] : null
 }
 
+const functionParser = function (input){
+    let string = /^[*/+-]/.exec(input) || /^[=<>]{1,2}/.exec(input) || functionRE.exec(input)
+    return string ? [string[0], input.slice(string[0].length)] : null
+}
+
 const expressionParser = function(input){
     if(input[0] !== '(') return null
     input = input.slice(1)
-    let array = []
+    let array = [], value = null
     while(input[0] !== ')'){
         input = spaceParser(input)
-        if(input[0] === ')') break
-        let string = valueParser(input)
-        if(!string){
-            let EoF = input.indexOf(' ')
-            array.push(input.slice(0, EoF))
-            input = input.slice(EoF)
-        }
-        else{
-            array.push(string[0])
-            input = string[1]
-        }
-        input = spaceParser(input)
-        if(input[0] === ')') break
-        let value = expressionParser(input)
-        if(value){
-            array.push(value[0])
-            input = value[1]
-        }
+        let value
+        value = valueParser(input) || functionParser(input)
+        if(!value) return null
+        array.push(value[0])
+        input = value[1]
     }
-    return [functionParser(array), input.slice(1)]
+    return [functionEvaluator(array, standardEnv), input.slice(1)]
 }
 
 const valueParser = function(input){
-    let result = (expressionParser(input) || numberParser(input) || identifierParser(input))
+    input = spaceParser(input)
+    let result = (expressionParser(input) || numberParser(input) || functionParser(input) || identifierParser(input))
     return result
     return null
 }
 
-const functionParser = function(input){
+const functionEvaluator = function(input, currentEnv){
     let operator = input[0], operation = null
     input.shift()
-    let keys = Object.keys(standardEnv)
+    let keys = Object.keys(currentEnv)
     for(let ar_i in keys)
         if(operator === keys[ar_i]){
-            operation = standardEnv[keys[ar_i]]
+            operation = currentEnv[keys[ar_i]]
             break
         }
     return operation(input)
+}
+
+const lambdaParser = function(input){
+    return true
 }
 
 console.log(valueParser(file))
