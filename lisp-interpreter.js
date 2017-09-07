@@ -16,14 +16,11 @@ let standardEnv = {
 
     'if' : input => input[0] ? input[1] : input[2],
     'define' : input => standardEnv[input[0]] = input[1],
-    'begin' : input => input.slice(0, -1),
-    'write' : input => input[0],
+    'begin' : input => input[input.length - 1],
 
     'abs' : input => Math.abs(input[0]),
     'max' : input => input.reduce((array, value) => Math.max(array, value)),
     'min' : input => input.reduce((array, value) => Math.min(array, value)),
-
-    'lambda' : input => lambdaParser(input)
 }
 
 const spaceParser = function(input){
@@ -86,30 +83,4 @@ const functionParser = function(input){
     return operation(input)
 }
 
-const lambdaParser = function(input){
-    console.log(input);
-    return true
-}
-
 console.log(valueParser(file))
-
-// IDEA: lambda
-/*      'append':  op.add,
-        'apply':   apply,
-        'begin':   lambda *x: x[-1],
-        'car':     lambda x: x[0],
-        'cdr':     lambda x: x[1:],
-        'cons':    lambda x,y: [x] + y,
-        'eq?':     op.is_,
-        'equal?':  op.eq,
-        'length':  len,
-        'list':    lambda *x: list(x),
-        'list?':   lambda x: isinstance(x,list),
-        'map':     map,
-        'not':     op.not_,
-        'null?':   lambda x: x == [],
-        'number?': lambda x: isinstance(x, Number),
-        'procedure?': callable,
-        'round':   round,
-        'symbol?': lambda x: isinstance(x, Symbol),
-*/
