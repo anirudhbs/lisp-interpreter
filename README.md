@@ -7,11 +7,9 @@ Lisp interpreter using Javascript
 
 ##Usage
 
-
 ```
 node lisp-interpreter.js file
 ```
-
 
 ## License
 
