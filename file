@@ -1,0 +1,2 @@
+(define example (lambda (a b c) (+ a b c)))
+(list 99 (example 1 2 3) (max 100 101))
