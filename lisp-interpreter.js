@@ -31,27 +31,27 @@ let functionRE = new RegExp(functions.join('|'))
 
 let secondaryEnv = {}
 
-const spaceParser = function(input) {
+const spaceParser = (input) => {
     return /^(\s)+/.exec(input) ? input.replace(/^(\s)+/, '') : input
 }
 
-const numberParser = function(input) {
+const numberParser = (input) => {
     let number = /^[-+]{0,1}\d+/.exec(input)
     return number ? [parseFloat(number[0]), input.slice(number[0].length)] : null
 }
 
-const stringParser = function(input) {
+const stringParser = (input) => {
     let EoS = input.indexOf('"')
     return input[0] === '"' ? [input.slice(1, EoS), input.slice(EoS + 1)] : null
 }
 
-const functionParser = function(input) {
+const functionParser = (input) => {
     let argument, fxn = /^[a-z]+/.exec(input) || /^[/*-+]/.exec(input) || /^[=<>]{1,2}/.exec(input)
     if (fxn) argument = spaceParser(input.slice(fxn[0].length))
     return fxn ? [fxn[0], argument] : null
 }
 
-const expressionParser = function(input) {
+const expressionParser = (input) => {
     if (input[0] !== '(') return null
     input = spaceParser(input.slice(1))
     let array,
@@ -68,11 +68,11 @@ const expressionParser = function(input) {
     return [functionEvaluator(array), input.slice(1)]
 }
 
-const valueParser = function(input) {
+const valueParser = (input) => {
     return numberParser(input) || stringParser(input) || functionParser(input) || expressionParser(input)
 }
 
-const functionEvaluator = function(input) {
+const functionEvaluator = (input) => {
     let fxn = input[0],
         args = input.slice(1)
     for (let ar_i of args) {
@@ -86,7 +86,7 @@ const functionEvaluator = function(input) {
     return operation ? operation(args) : procedure(fxn, args)
 }
 
-const lambdaParser = function(input) {
+const lambdaParser = (input) => {
     if (input.slice(0, 6) !== 'lambda') return null
     let argumentArray = [],
         fxn = {},
@@ -108,7 +108,7 @@ const lambdaParser = function(input) {
     return [fxn, input]
 }
 
-const defineParser = function(input) {
+const defineParser = (input) => {
     if (input.slice(0, 6) !== 'define') return null
     input = input.slice(7)
     let identifier,
@@ -123,7 +123,7 @@ const defineParser = function(input) {
     return [, result]
 }
 
-const procedure = function(fxn, args) {
+const procedure = (fxn, args) => {
     let keys = Object.keys(secondaryEnv)
     for (let ar_i in keys)
         if (fxn === keys[ar_i]) fxn = secondaryEnv[fxn]
@@ -137,16 +137,17 @@ const procedure = function(fxn, args) {
     return expressionParser(body)[0]
 }
 
-const macroParser = function(input) {
+const macroParser = (input) => {
     return true
 }
 
-// IDEA: parser()
-const parser = function(input) {
-    let temp = valueParser(input)
-    input = temp[1].slice(1)
-    temp = valueParser(spaceParser(input))
-    if (temp[0] !== undefined) console.log(temp[0])
+const parser = (input) => {
+    while (input) {
+        let temp = valueParser(input)
+        if (temp[0] !== undefined) console.log(temp[0])
+        input = temp[1].slice(1)
+        input = spaceParser(input)
+    }
 }
 
 fs.readFile(file, 'utf-8', (err, input) => parser(input))
