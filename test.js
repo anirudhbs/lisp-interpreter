@@ -12,17 +12,18 @@ let standardEnv = {
   '>': input => input[0] > input[1],
   '>=': input => input[0] >= input[1],
   'abs': input => Math.abs(input[0]),
-  'max': input => input.reduce((array, value) => Math.max(array, value)),
-  'min': input => input.reduce((array, value) => Math.min(array, value)),
+  'max': input => Math.max(...input),
+  'min': input => Math.min(...input),
   'pow': input => Math.pow(input[0], input[1]),
   'list': input => input,
   'car': input => input[0],
   'cdr': input => input.slice(1),
-  //'print': input => console.log(input[0]),
   'if': input => input[0] ? input[1] : input[2],
-  'define': input => standardEnv[input[0]] = parseFloat(input[1]),
-  'r' : input => 10
+  'define': input => declaredVars[input[0]] = parseFloat(input[1]),
+  'begin': input => input[input.length - 1],
 }
+
+let declaredVars = {}
 
 const makeRE = () => {
   let keys = Object.keys(standardEnv),
@@ -46,6 +47,7 @@ const numberParser = input => {
 const functionParser = input => {
   let SEfunctionsRE = makeRE()
   let fxn = /^[/*+-]{1}/.exec(input) || /^[=<>]{1,2}/.exec(input) || SEfunctionsRE.exec(input) || /\w{1}/.exec(input)
+  //console.log("fxn-", fxn);
   return fxn ? [fxn[0], input.slice(fxn[0].length)] : null
 }
 
@@ -64,10 +66,10 @@ const expressionParser = input => {
     input = spaceParser(input)
     if (input.startsWith(')')) break
     value = valueParser(input)
-    //console.log("value is", value[0]);
     array.push(value[0])
     input = value[1]
   }
+  //console.log("array:", array);
   let eval = functionEvaluator(array)
   return [eval, input.slice(1)]
 }
@@ -82,19 +84,27 @@ const functionEvaluator = input => {
   if (input.length === 1) return input[0] //only 1 value in expression
   let fxn = input[0],
     args = input.slice(1)
+  //console.log("args are:", args)
+  for (let ar_i in args) {
+    if (declaredVars[args[ar_i]] !== undefined) {
+      //console.log(declaredVars[args[ar_i]]);
+      args[ar_i] = declaredVars[args[ar_i]]
+    }
+  }
+  //console.log("args:", args);
+  //console.log("dec-", declaredVars);
   return standardEnv.hasOwnProperty(fxn) ? standardEnv[fxn](args) : null
 }
 
 const lispParser = input => {
   let temp = valueParser(input)
   let parsed = temp[0]
+  //console.log("temp-", temp);
+  //console.log(JSON.stringify(declaredVars, null, 2));
+  //console.log("output:", parsed)
 
-  console.log("output:", parsed)
-
-  input = temp[1]
-  temp = valueParser(input)
-  parsed = temp[0]
-  console.log("op2:", parsed);
+  temp = valueParser(temp[1])
+  console.log(temp[0]);
 }
 
 fs.readFile(file, 'utf-8', (err, input) => lispParser(input))
