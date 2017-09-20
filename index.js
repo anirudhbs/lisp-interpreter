@@ -1,7 +1,6 @@
 const fs = require('fs')
-const file = process.argv[2]
 
-let standardEnv = {
+const standardEnv = {
   '+': input => input.reduce((sum, num) => sum + num, 0),
   '-': input => input[0] - input[1],
   '*': input => input.reduce((product, num) => product * num, 1),
@@ -11,13 +10,11 @@ let standardEnv = {
   '<=': input => input[0] <= input[1],
   '>': input => input[0] > input[1],
   '>=': input => input[0] >= input[1],
-
   'if': input => input[0] ? input[1] : input[2],
-  'define': input => standardEnv[input[0]] = parseFloat(input[1]),
+  'define': input => (standardEnv[input[0]] = parseFloat(input[1])),
   'begin': input => input[input.length - 1],
-  'begin': input => input.slice(0, input.length - 1),
   'abs': input => Math.abs(input[0]),
-  'max': input => input.reduce((array, value) => Math.max(array, value)), //...array
+  'max': input => input.reduce((array, value) => Math.max(array, value)), // ...array
   'min': input => input.reduce((array, value) => Math.min(array, value)),
   'list': input => input,
   'car': input => input[0],
@@ -26,34 +23,36 @@ let standardEnv = {
   'pow': input => Math.pow(input[0], input[1])
 }
 
-let secondaryEnv = new Object()
+const secondaryEnv = {}
 
-const spaceParser = input => {
+function spaceParser (input) {
   return /^(\s)+/.exec(input) ? input.replace(/^(\s)+/, '') : input
 }
 
-const numberParser = input => {
+function numberParser (input) {
   let number = /^[-+]{0,1}\d+/.exec(input)
   return number ? [parseFloat(number[0]), input.slice(number[0].length)] : null
 }
 
-const stringParser = input => {
-  let EoS = input.indexOf(' ') // IDEA: print strings"
+function stringParser (input) {
+  let EoS = input.indexOf(' ') // todo: print strings"
   return input.startsWith('"') ? [input.slice(1, EoS), input.slice(EoS + 1)] : null
 }
 
-const functionParser = input => {
+function functionParser (input) {
   let fxn = /^[a-z]+/.exec(input) || /^[/*-+]/.exec(input) || /^[=<>]{1,2}/.exec(input)
   if (fxn) input = spaceParser(input.slice(fxn[0].length))
   return fxn ? [fxn[0], input] : null
 }
 
-const expressionParser = input => {
+function expressionParser (input) {
   if (input[0] !== '(') return null
   input = input.slice(1)
-  let array,
-    value
-  if (array = lambdaParser(input)) return array
+  let array = lambdaParser(input)
+  let value
+  if (array) {
+    return array
+  }
   array = []
   while (input[0] !== ')') {
     value = valueParser(input)
@@ -64,33 +63,37 @@ const expressionParser = input => {
   return [functionEvaluator(array), input.slice(1)]
 }
 
-const valueParser = input => {
+function valueParser (input) {
   input = spaceParser(input)
   return numberParser(input) || stringParser(input) || functionParser(input) || expressionParser(input)
 }
 
-const functionEvaluator = input => {
-  let fxn = input[0],
-    args = input.slice(1)
-  for (let ar_i of args) {
-    if (functionParser(ar_i) !== null && secondaryEnv[ar_i] !== undefined)
-      ar_i = secondaryEnv[arg]
+function functionEvaluator (input) {
+  let fxn = input[0]
+  let args = input.slice(1)
+  for (let i of args) {
+    if (functionParser(i) !== null && secondaryEnv[i] !== undefined) {
+      i = secondaryEnv[args]
+    }
   }
-  let keys = Object.keys(standardEnv),
-    operation = null
-  for (let ar_i in keys)
-    if (fxn === keys[ar_i]) operation = standardEnv[keys[ar_i]]
+  let keys = Object.keys(standardEnv)
+  let operation = null
+  for (let i in keys) {
+    if (fxn === keys[i]) {
+      operation = standardEnv[keys[i]]
+    }
+  }
   return operation ? operation(args) : procedure(fxn, args)
 }
 
-const lambdaParser = input => {
+function lambdaParser (input) {
   if (!input.startsWith('define')) return null
   input = input.slice(7)
   let identifier,
     result
   identifier = functionParser(input)
   input = spaceParser(identifier[1])
-  result = LambdaHelper(input.slice(1))
+  result = lambdaHelper(input.slice(1))
   if (!result) return null
   secondaryEnv[identifier[0]] = result[0]
   input = spaceParser(result[1])
@@ -98,13 +101,13 @@ const lambdaParser = input => {
   return [null, input]
 }
 
-const LambdaHelper = input => {
+function lambdaHelper (input) {
   if (!input.startsWith('lambda')) return null
   input = input.slice(8)
-  let argumentArray = new Array,
-    fxn = new Object(),
-    body
-  while (input[0] != ')') { //arguments
+  let argumentArray = []
+  let fxn = {}
+  let body
+  while (input[0] !== ')') { // arguments
     input = spaceParser(input)
     if (input[0] === ')') return null
     let value = valueParser(input)
@@ -114,7 +117,7 @@ const LambdaHelper = input => {
   }
   fxn.argumentArray = argumentArray
   input = spaceParser(input.slice(1))
-  let EoE = input.indexOf('))') //body
+  let EoE = input.indexOf('))') // body
   body = input.slice(0, (EoE + 1))
   fxn.body = body
   fxn.env = {}
@@ -122,13 +125,15 @@ const LambdaHelper = input => {
   return [fxn, input]
 }
 
-const procedure = (fxn, args) => {
+function procedure (fxn, args) {
   let keys = Object.keys(secondaryEnv)
-  for (let ar_i in keys)
-    if (fxn === keys[ar_i]) fxn = secondaryEnv[fxn]
-  let argumentArray = fxn.argumentArray,
-    body = fxn.body
-  for (let ar_i in args) fxn.env[argumentArray[ar_i]] = args[ar_i]
+  for (let i in keys) {
+    if (fxn === keys[i]) {
+      fxn = secondaryEnv[fxn]
+    }
+  }
+  let { argumentArray, body } = fxn
+  for (let i in args) fxn.env[argumentArray[i]] = args[i]
   for (let argument in argumentArray) {
     let temp = argumentArray[argument]
     body = body.replace(new RegExp(temp), fxn.env[temp])
@@ -136,7 +141,7 @@ const procedure = (fxn, args) => {
   return expressionParser(body)[0]
 }
 
-const parser = input => {
+function parser (input) {
   while (input) {
     let temp = valueParser(input)
     if (temp[0]) console.log(temp[0])
@@ -145,4 +150,9 @@ const parser = input => {
   }
 }
 
-fs.readFile(file, 'utf-8', (err, input) => parser(input))
+const file = process.argv[2]
+fs.readFile(file, 'utf-8', (err, input) => {
+  if (!err) {
+    parser(input)
+  }
+})
