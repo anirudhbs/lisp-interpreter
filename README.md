@@ -3,7 +3,7 @@ Lisp interpreter using Javascript
 #### Usage :
 
 ```
-node lisp-interpreter.js inputFile
+node index.js inputFile
 ```
 
 #### Examples :
